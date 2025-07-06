@@ -62,60 +62,26 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Column(
           children: [
-            Container(
-              padding: EdgeInsets.all(15),
-              margin: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                color: const Color.fromARGB(255, 255, 214, 90),
-              ),
-              child: Row(
-                children: [
-                  Transform.scale(
-                    scale: 1.5,
-                    child: Checkbox(
-                      value: cleanedTeethMorning,
-                      onChanged: (value) {
-                        cleanedTeethMorning = value!;
-                        setState(() {});
-                      },
-                    ),
-                  ),
-
-                  Text(
-                    ' Cleaned teeth in the morning',
-                    style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 20),
-                  ),
-                ],
-              ),
+            TeethCheckboxContainer(
+              value: cleanedTeethMorning,
+              text: 'Cleaned teeth in the morning',
+              color: const Color.fromARGB(255, 243, 216, 129),
+              onChanged: (value) {
+                setState(() {
+                  cleanedTeethMorning = value!;
+                });
+              },
             ),
 
-            Container(
-              padding: EdgeInsets.all(15),
-              margin: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                color: const Color.fromARGB(255, 164, 145, 248),
-              ),
-              child: Row(
-                children: [
-                  Transform.scale(
-                    scale: 1.5,
-                    child: Checkbox(
-                      value: cleanedTeethEvening,
-                      onChanged: (value) {
-                        cleanedTeethEvening = value!;
-                        setState(() {});
-                      },
-                    ),
-                  ),
-
-                  Text(
-                    ' Cleaned teeth in the evening',
-                    style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 20),
-                  ),
-                ],
-              ),
+            TeethCheckboxContainer(
+              value: cleanedTeethEvening,
+              text: 'Cleaned teeth in the evening',
+              color: const Color.fromARGB(255, 164, 145, 248),
+              onChanged: (value) {
+                setState(() {
+                  cleanedTeethEvening = value!;
+                });
+              },
             ),
           ],
         ),
