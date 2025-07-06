@@ -11,21 +11,46 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+class TeethCheckboxContainer extends StatelessWidget {
+  final bool value;
+  final String text;
+  final Color color;
+  final void Function(bool?)? onChanged;
+
+  const TeethCheckboxContainer({
+    super.key,
+    required this.value,
+    required this.text,
+    required this.color,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(15),
+      margin: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        color: color,
+      ),
+      child: Row(
+        children: [
+          Transform.scale(
+            scale: 1.5,
+            child: Checkbox(value: value, onChanged: onChanged),
+          ),
+
+          Text(text, style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 20)),
+        ],
+      ),
+    );
+  }
+}
+
 class _MyAppState extends State<MyApp> {
-
-  int count = 0;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    super.dispose();
-  }
+  bool cleanedTeethMorning = false;
+  bool cleanedTeethEvening = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,32 +60,65 @@ class _MyAppState extends State<MyApp> {
           backgroundColor: Colors.amber,
           title: const Text('Start of the app'),
         ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.verified),
-          onPressed: (){
-            print('Hello World!');
-            setState(() {
-              count++;
-            });
-        }),
-        body:Center(
-          child: Text(
-            '$count',
-            style: TextStyle(fontSize: 60),
-          ),
+        body: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(15),
+              margin: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                color: const Color.fromARGB(255, 255, 214, 90),
+              ),
+              child: Row(
+                children: [
+                  Transform.scale(
+                    scale: 1.5,
+                    child: Checkbox(
+                      value: cleanedTeethMorning,
+                      onChanged: (value) {
+                        cleanedTeethMorning = value!;
+                        setState(() {});
+                      },
+                    ),
+                  ),
+
+                  Text(
+                    ' Cleaned teeth in the morning',
+                    style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 20),
+                  ),
+                ],
+              ),
+            ),
+
+            Container(
+              padding: EdgeInsets.all(15),
+              margin: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                color: const Color.fromARGB(255, 164, 145, 248),
+              ),
+              child: Row(
+                children: [
+                  Transform.scale(
+                    scale: 1.5,
+                    child: Checkbox(
+                      value: cleanedTeethEvening,
+                      onChanged: (value) {
+                        cleanedTeethEvening = value!;
+                        setState(() {});
+                      },
+                    ),
+                  ),
+
+                  Text(
+                    ' Cleaned teeth in the evening',
+                    style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 20),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.business),
-              label: 'Business'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.work),
-              label: 'Work')
-          ]),
       ),
     );
   }
