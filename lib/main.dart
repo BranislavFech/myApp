@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:myapp/minutes.dart';
 
 import 'dart:async';
 
@@ -55,6 +58,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 
+  /*
   final database = openDatabase(
     join(await getDatabasesPath(), 'days_database.db'),
     onCreate: (db, version) {
@@ -109,8 +113,7 @@ void main() async {
   }
 
   print(await days());
-
-
+  */
 }
 
 class MyApp extends StatefulWidget {
@@ -158,6 +161,20 @@ class TeethCheckboxContainer extends StatelessWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  int timeLeft = 0;
+
+  void _startCountDown() {
+    Timer.periodic(Duration(seconds: 1), (timer) {
+      if (timeLeft > 0) {
+        setState(() {
+          timeLeft--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
   bool cleanedTeethMorning = false;
   bool cleanedTeethEvening = false;
 
@@ -171,6 +188,7 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Column(
           children: [
+            /*
             TeethCheckboxContainer(
               value: cleanedTeethMorning,
               text: 'Cleaned teeth in the morning',
@@ -191,6 +209,42 @@ class _MyAppState extends State<MyApp> {
                   cleanedTeethEvening = value!;
                 });
               },
+            ),*/
+            Container(
+              height: 150,
+              child: ListWheelScrollView.useDelegate(
+                onSelectedItemChanged: (value) {
+                  setState(() {
+                    timeLeft = (1+value)*300;
+                  });
+                },
+                itemExtent: 50,
+                physics: FixedExtentScrollPhysics(),
+                childDelegate: ListWheelChildBuilderDelegate(
+                  childCount: 12,
+                  builder: (context, index) {
+                    return MyMinutes(
+                      mins: index,
+                    );
+                  },
+                ),
+              ),
+            ),
+            Text(
+              (timeLeft).toString(),
+              style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 30),
+            ),
+            MaterialButton(
+              onPressed: _startCountDown,
+              color: Colors.deepPurple,
+              child: Text(
+                'Start',
+                style: TextStyle(
+                  fontFamily: 'Bahnschrift',
+                  fontSize: 30,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
