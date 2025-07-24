@@ -175,78 +175,99 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   bool cleanedTeethMorning = false;
   bool cleanedTeethEvening = false;
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> _widgetOptions = <Widget>[
+      Column(
+        children: [
+          Container(
+            height: 150,
+            child: ListWheelScrollView.useDelegate(
+              onSelectedItemChanged: (value) {
+                setState(() {
+                  timeLeft = (1 + value) * 300;
+                });
+              },
+              itemExtent: 50,
+              physics: FixedExtentScrollPhysics(),
+              childDelegate: ListWheelChildBuilderDelegate(
+                childCount: 12,
+                builder: (context, index) {
+                  return MyMinutes(mins: index);
+                },
+              ),
+            ),
+          ),
+          Text(
+            (timeLeft).toString(),
+            style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 30),
+          ),
+          MaterialButton(
+            onPressed: _startCountDown,
+            color: Colors.deepPurple,
+            child: Text(
+              'Start',
+              style: TextStyle(
+                fontFamily: 'Bahnschrift',
+                fontSize: 30,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+      Column(
+        children: [
+          TeethCheckboxContainer(
+            value: cleanedTeethMorning,
+            text: 'Cleaned teeth in the morning',
+            color: const Color.fromARGB(255, 243, 216, 129),
+            onChanged: (value) {
+              setState(() {
+                cleanedTeethMorning = value!;
+              });
+            },
+          ),
+
+          TeethCheckboxContainer(
+            value: cleanedTeethEvening,
+            text: 'Cleaned teeth in the evening',
+            color: const Color.fromARGB(255, 164, 145, 248),
+            onChanged: (value) {
+              setState(() {
+                cleanedTeethEvening = value!;
+              });
+            },
+          ),
+        ],
+      ),
+    ];
+
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.amber,
           title: const Text('Start of the app'),
         ),
-        body: Column(
-          children: [
-            /*
-            TeethCheckboxContainer(
-              value: cleanedTeethMorning,
-              text: 'Cleaned teeth in the morning',
-              color: const Color.fromARGB(255, 243, 216, 129),
-              onChanged: (value) {
-                setState(() {
-                  cleanedTeethMorning = value!;
-                });
-              },
-            ),
-
-            TeethCheckboxContainer(
-              value: cleanedTeethEvening,
-              text: 'Cleaned teeth in the evening',
-              color: const Color.fromARGB(255, 164, 145, 248),
-              onChanged: (value) {
-                setState(() {
-                  cleanedTeethEvening = value!;
-                });
-              },
-            ),*/
-            Container(
-              height: 150,
-              child: ListWheelScrollView.useDelegate(
-                onSelectedItemChanged: (value) {
-                  setState(() {
-                    timeLeft = (1+value)*300;
-                  });
-                },
-                itemExtent: 50,
-                physics: FixedExtentScrollPhysics(),
-                childDelegate: ListWheelChildBuilderDelegate(
-                  childCount: 12,
-                  builder: (context, index) {
-                    return MyMinutes(
-                      mins: index,
-                    );
-                  },
-                ),
-              ),
-            ),
-            Text(
-              (timeLeft).toString(),
-              style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 30),
-            ),
-            MaterialButton(
-              onPressed: _startCountDown,
-              color: Colors.deepPurple,
-              child: Text(
-                'Start',
-                style: TextStyle(
-                  fontFamily: 'Bahnschrift',
-                  fontSize: 30,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+        body: Column(children: [_widgetOptions[_selectedIndex]]),
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Timer'),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           ],
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
         ),
       ),
     );
