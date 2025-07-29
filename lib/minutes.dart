@@ -9,7 +9,9 @@ class MyMinutes extends StatelessWidget {
   @override 
   Widget build(BuildContext context) {
     return Container(
-      child: Center(child: Text(((mins+1)*5).toString()),),
+      child: Center(child: Text(
+        ((mins+1)*5).toString()
+        ),),
     );
   }
 }

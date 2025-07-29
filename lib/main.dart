@@ -162,15 +162,18 @@ class TeethCheckboxContainer extends StatelessWidget {
 
 class _MyAppState extends State<MyApp> {
   int timeLeft = 0;
+  bool stopTimer = false;
 
   void _startCountDown() {
     Timer.periodic(Duration(seconds: 1), (timer) {
-      if (timeLeft > 0) {
+      if (timeLeft > 0 && !stopTimer) {
         setState(() {
           timeLeft--;
         });
+        stopTimer = true;
       } else {
         timer.cancel();
+        stopTimer = false;
       }
     });
   }
@@ -181,6 +184,13 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  String formattedTime(int time) // --> time in form of seconds
+  {    
+    final int sec = time % 60;
+    final int min = (time / 60).floor();
+    return "${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}";
   }
 
   bool cleanedTeethMorning = false;
@@ -210,7 +220,8 @@ class _MyAppState extends State<MyApp> {
             ),
           ),
           Text(
-            (timeLeft).toString(),
+            formattedTime(timeLeft),
+            //(timeLeft).toString(),
             style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 30),
           ),
           MaterialButton(
