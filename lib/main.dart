@@ -7,30 +7,14 @@ import 'dart:async';
 
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class MyDay {
   final bool cleanedTeethMorning;
   final bool cleanedTeethEvening;
 
-  final bool readBook;
-  final int pagesRead;
-
-  final bool coldShower;
-
-  final bool excersized;
-  final bool pushWorkout;
-  final bool pullWorkout;
-  final bool legsWorkout;
-
   const MyDay({
     required this.cleanedTeethEvening,
-    required this.readBook,
-    required this.pagesRead,
-    required this.coldShower,
-    required this.excersized,
-    required this.pushWorkout,
-    required this.pullWorkout,
-    required this.legsWorkout,
     required this.cleanedTeethMorning,
   });
 
@@ -38,19 +22,12 @@ class MyDay {
     return {
       'cleanedTeethMorning': cleanedTeethMorning ? 1 : 0,
       'cleanedTeethEvening': cleanedTeethEvening ? 1 : 0,
-      'readBook': readBook ? 1 : 0,
-      'pagesRead': pagesRead,
-      'coldShower': coldShower ? 1 : 0,
-      'excersized': excersized ? 1 : 0,
-      'pushWorkout': pushWorkout ? 1 : 0,
-      'pullWorkout': pullWorkout ? 1 : 0,
-      'legsWorkout': legsWorkout ? 1 : 0,
     };
   }
 
   @override
   String toString() {
-    return 'MyDay{cleanedTeethMorning: $cleanedTeethMorning, cleanedTeethEvening: $cleanedTeethEvening, readBook: $readBook, pagesRead: $pagesRead, coldShower: $coldShower, excersized: $excersized, pushWorkout: $pushWorkout, pullWorkout: $pullWorkout, legsWorkout: $legsWorkout}';
+    return 'MyDay{cleanedTeethMorning: $cleanedTeethMorning, cleanedTeethEvening: $cleanedTeethEvening}';
   }
 }
 
@@ -58,12 +35,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 
-  /*
+  
   final database = openDatabase(
-    join(await getDatabasesPath(), 'days_database.db'),
+    join(await getDatabasesPath(), 'test_db.db'),
     onCreate: (db, version) {
       return db.execute(
-        'CREATE TABLE days (cleanedTeethEvening INTEGER, cleanedTeethMorning INTEGER, readBook INTEGER, pagesRead INTEGER, coldShower INTEGER, excersized INTEGER, pushWorkout INTEGER, pullWorkout INTEGER, legsWorkout INTEGER)',
+        'CREATE TABLE days (cleanedTeethEvening INTEGER, cleanedTeethMorning INTEGER)',
       );
     },
     version: 1,
@@ -81,13 +58,6 @@ void main() async {
 
   var day = MyDay(
     cleanedTeethEvening: true,
-    readBook: true,
-    pagesRead: 7,
-    coldShower: false,
-    excersized: true,
-    pushWorkout: true,
-    pullWorkout: false,
-    legsWorkout: false,
     cleanedTeethMorning: false,
   );
 
@@ -101,19 +71,12 @@ void main() async {
       return MyDay(
         cleanedTeethMorning: (map['cleanedTeethMorning'] as int) == 1,
         cleanedTeethEvening: (map['cleanedTeethEvening'] as int) == 1,
-        readBook: (map['readBook'] as int) == 1,
-        pagesRead: map['pagesRead'] as int,
-        coldShower: (map['coldShower'] as int) == 1,
-        excersized: (map['excersized'] as int) == 1,
-        pushWorkout: (map['pushWorkout'] as int) == 1,
-        pullWorkout: (map['pullWorkout'] as int) == 1,
-        legsWorkout: (map['legsWorkout'] as int) == 1,
       );
     }).toList();
   }
 
   print(await days());
-  */
+  
 }
 
 class MyApp extends StatefulWidget {
@@ -186,8 +149,8 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  String formattedTime(int time) // --> time in form of seconds
-  {    
+  String formattedTime(int time)
+  {
     final int sec = time % 60;
     final int min = (time / 60).floor();
     return "${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}";
@@ -196,9 +159,41 @@ class _MyAppState extends State<MyApp> {
   bool cleanedTeethMorning = false;
   bool cleanedTeethEvening = false;
 
+  DateTime today = DateTime.now();
+  DateTime? _selectedDay;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+
   @override
   Widget build(BuildContext context) {
     List<Widget> _widgetOptions = <Widget>[
+      Column(
+        children: [
+          TableCalendar(
+            focusedDay: today,
+            firstDay: DateTime.utc(2020, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+          
+            selectedDayPredicate: (day) {
+              return isSameDay(_selectedDay, day);
+            },
+            onDaySelected: (selectedDay, focusedDay) {
+              setState(() {
+                _selectedDay = selectedDay;
+                today = focusedDay; 
+              });
+            },
+            calendarFormat: _calendarFormat,
+            onFormatChanged: (format) {
+              setState(() {
+                _calendarFormat = format;
+              });
+            },
+            onPageChanged: (focusedDay) {
+              today = focusedDay;
+            },
+          ),
+        ],
+      ),
       Column(
         children: [
           Container(
@@ -274,6 +269,10 @@ class _MyAppState extends State<MyApp> {
         body: Column(children: [_widgetOptions[_selectedIndex]]),
         bottomNavigationBar: BottomNavigationBar(
           items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_month),
+              label: 'Calendar',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Timer'),
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           ],
