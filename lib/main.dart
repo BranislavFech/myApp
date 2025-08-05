@@ -2,6 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:myapp/minutes.dart';
+import 'package:intl/intl.dart';
+
 
 import 'dart:async';
 
@@ -10,16 +12,19 @@ import 'package:sqflite/sqflite.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class MyDay {
+  final String date;
   final bool cleanedTeethMorning;
   final bool cleanedTeethEvening;
 
   const MyDay({
+    required this.date,
     required this.cleanedTeethEvening,
     required this.cleanedTeethMorning,
   });
 
   Map<String, Object?> toMap() {
     return {
+      'date': date,
       'cleanedTeethMorning': cleanedTeethMorning ? 1 : 0,
       'cleanedTeethEvening': cleanedTeethEvening ? 1 : 0,
     };
@@ -27,26 +32,13 @@ class MyDay {
 
   @override
   String toString() {
-    return 'MyDay{cleanedTeethMorning: $cleanedTeethMorning, cleanedTeethEvening: $cleanedTeethEvening}';
+    return 'MyDay{date: $date, cleanedTeethMorning: $cleanedTeethMorning, cleanedTeethEvening: $cleanedTeethEvening}';
   }
 }
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(MyApp());
+late final Future<Database> database;
 
-  
-  final database = openDatabase(
-    join(await getDatabasesPath(), 'test_db.db'),
-    onCreate: (db, version) {
-      return db.execute(
-        'CREATE TABLE days (cleanedTeethEvening INTEGER, cleanedTeethMorning INTEGER)',
-      );
-    },
-    version: 1,
-  );
-
-  Future<void> insertMyDay(MyDay myDay) async {
+Future<void> insertMyDay(MyDay myDay) async {
     final db = await database;
 
     await db.insert(
@@ -54,29 +46,37 @@ void main() async {
       myDay.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-  }
+}
 
-  var day = MyDay(
-    cleanedTeethEvening: true,
-    cleanedTeethMorning: false,
-  );
-
-  await insertMyDay(day);
-
-  Future<List<MyDay>> days() async {
+Future<List<MyDay>> days() async {
     final db = await database;
     final List<Map<String, Object?>> dayMaps = await db.query('days');
 
     return dayMaps.map((map) {
       return MyDay(
+        date: map['date'] as String,
         cleanedTeethMorning: (map['cleanedTeethMorning'] as int) == 1,
         cleanedTeethEvening: (map['cleanedTeethEvening'] as int) == 1,
       );
     }).toList();
   }
 
-  print(await days());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   
+  database = openDatabase(
+    join(await getDatabasesPath(), 'test_db_v1.db'),
+    onCreate: (db, version) {
+      return db.execute(
+        'CREATE TABLE days (date TEXT PRIMARY KEY, cleanedTeethEvening INTEGER, cleanedTeethMorning INTEGER)',
+      );
+    },
+    version: 1,
+  );
+
+  runApp(MyApp());
+
 }
 
 class MyApp extends StatefulWidget {
@@ -239,21 +239,40 @@ class _MyAppState extends State<MyApp> {
             value: cleanedTeethMorning,
             text: 'Cleaned teeth in the morning',
             color: const Color.fromARGB(255, 243, 216, 129),
-            onChanged: (value) {
+            onChanged: (value) async {
               setState(() {
                 cleanedTeethMorning = value!;
               });
+
+              await insertMyDay(MyDay(
+                date: DateFormat('yyyy-MM-dd').format(today),
+                cleanedTeethMorning: cleanedTeethMorning,
+                cleanedTeethEvening: cleanedTeethEvening
+              ));
+
+              print(await days());  
+
             },
+
           ),
 
           TeethCheckboxContainer(
             value: cleanedTeethEvening,
             text: 'Cleaned teeth in the evening',
             color: const Color.fromARGB(255, 164, 145, 248),
-            onChanged: (value) {
+            onChanged: (value) async {
               setState(() {
                 cleanedTeethEvening = value!;
               });
+
+              await insertMyDay(MyDay(
+                date: DateFormat('yyyy-MM-dd').format(today),
+                cleanedTeethMorning: cleanedTeethMorning,
+                cleanedTeethEvening: cleanedTeethEvening
+              ));
+
+              print(await days());  
+
             },
           ),
         ],
