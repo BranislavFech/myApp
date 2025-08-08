@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:myapp/minutes.dart';
 import 'package:intl/intl.dart';
 
-
 import 'dart:async';
 
 import 'package:path/path.dart';
@@ -39,32 +38,31 @@ class MyDay {
 late final Future<Database> database;
 
 Future<void> insertMyDay(MyDay myDay) async {
-    final db = await database;
+  final db = await database;
 
-    await db.insert(
-      'days',
-      myDay.toMap(),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+  await db.insert(
+    'days',
+    myDay.toMap(),
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
 }
 
 Future<List<MyDay>> days() async {
-    final db = await database;
-    final List<Map<String, Object?>> dayMaps = await db.query('days');
+  final db = await database;
+  final List<Map<String, Object?>> dayMaps = await db.query('days');
 
-    return dayMaps.map((map) {
-      return MyDay(
-        date: map['date'] as String,
-        cleanedTeethMorning: (map['cleanedTeethMorning'] as int) == 1,
-        cleanedTeethEvening: (map['cleanedTeethEvening'] as int) == 1,
-      );
-    }).toList();
-  }
+  return dayMaps.map((map) {
+    return MyDay(
+      date: map['date'] as String,
+      cleanedTeethMorning: (map['cleanedTeethMorning'] as int) == 1,
+      cleanedTeethEvening: (map['cleanedTeethEvening'] as int) == 1,
+    );
+  }).toList();
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  
   database = openDatabase(
     join(await getDatabasesPath(), 'test_db_v1.db'),
     onCreate: (db, version) {
@@ -76,7 +74,6 @@ void main() async {
   );
 
   runApp(MyApp());
-
 }
 
 class MyApp extends StatefulWidget {
@@ -126,6 +123,14 @@ class TeethCheckboxContainer extends StatelessWidget {
 class _MyAppState extends State<MyApp> {
   int timeLeft = 0;
   bool stopTimer = false;
+  final List<String> timerCategories = [
+    'Work',
+    'School',
+    'House work',
+    'Excercise',
+  ];
+
+  String? selectedValue;
 
   void _startCountDown() {
     Timer.periodic(Duration(seconds: 1), (timer) {
@@ -149,8 +154,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  String formattedTime(int time)
-  {
+  String formattedTime(int time) {
     final int sec = time % 60;
     final int min = (time / 60).floor();
     return "${min.toString().padLeft(2, '0')}:${sec.toString().padLeft(2, '0')}";
@@ -172,14 +176,14 @@ class _MyAppState extends State<MyApp> {
             focusedDay: today,
             firstDay: DateTime.utc(2020, 1, 1),
             lastDay: DateTime.utc(2030, 12, 31),
-          
+
             selectedDayPredicate: (day) {
               return isSameDay(_selectedDay, day);
             },
             onDaySelected: (selectedDay, focusedDay) {
               setState(() {
                 _selectedDay = selectedDay;
-                today = focusedDay; 
+                today = focusedDay;
               });
             },
             calendarFormat: _calendarFormat,
@@ -231,6 +235,25 @@ class _MyAppState extends State<MyApp> {
               ),
             ),
           ),
+          DropdownButtonHideUnderline(
+            child: DropdownButton(
+              hint: Text('Select category', style: TextStyle(fontSize: 14)),
+              items: timerCategories
+                  .map(
+                    (String item) => DropdownMenuItem<String>(
+                      value: item,
+                      child: Text(item, style: const TextStyle(fontSize: 14)),
+                    ),
+                  )
+                  .toList(),
+              value: selectedValue,
+              onChanged: (String? value) {
+                setState(() {
+                  selectedValue = value;
+                });
+              },
+            ),
+          ),
         ],
       ),
       Column(
@@ -244,16 +267,16 @@ class _MyAppState extends State<MyApp> {
                 cleanedTeethMorning = value!;
               });
 
-              await insertMyDay(MyDay(
-                date: DateFormat('yyyy-MM-dd').format(today),
-                cleanedTeethMorning: cleanedTeethMorning,
-                cleanedTeethEvening: cleanedTeethEvening
-              ));
+              await insertMyDay(
+                MyDay(
+                  date: DateFormat('yyyy-MM-dd').format(today),
+                  cleanedTeethMorning: cleanedTeethMorning,
+                  cleanedTeethEvening: cleanedTeethEvening,
+                ),
+              );
 
-              print(await days());  
-
+              print(await days());
             },
-
           ),
 
           TeethCheckboxContainer(
@@ -265,14 +288,15 @@ class _MyAppState extends State<MyApp> {
                 cleanedTeethEvening = value!;
               });
 
-              await insertMyDay(MyDay(
-                date: DateFormat('yyyy-MM-dd').format(today),
-                cleanedTeethMorning: cleanedTeethMorning,
-                cleanedTeethEvening: cleanedTeethEvening
-              ));
+              await insertMyDay(
+                MyDay(
+                  date: DateFormat('yyyy-MM-dd').format(today),
+                  cleanedTeethMorning: cleanedTeethMorning,
+                  cleanedTeethEvening: cleanedTeethEvening,
+                ),
+              );
 
-              print(await days());  
-
+              print(await days());
             },
           ),
         ],
