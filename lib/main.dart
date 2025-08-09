@@ -35,7 +35,38 @@ class MyDay {
   }
 }
 
+
+class Activity {
+  final int? id;
+  final String date;
+  final int duration;
+  final String category;
+
+  const Activity({
+    this.id,
+    required this.date,
+    required this.duration,
+    required this.category,
+  });
+
+  Map<String, Object?> toMap() {
+    return {
+      'id': id,
+      'date': date,
+      'duration': duration,
+      'category': category,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'MyDay{id: $id, date: $date, duration: $duration, category: $category}';
+  }
+}
+
 late final Future<Database> database;
+late final Future<Database> databaseActivities;
+
 
 Future<void> insertMyDay(MyDay myDay) async {
   final db = await database;
@@ -60,6 +91,31 @@ Future<List<MyDay>> days() async {
   }).toList();
 }
 
+Future<void> insertActivity(Activity activity) async {
+  final db = await databaseActivities;
+
+  await db.insert(
+    'activities',
+    activity.toMap(),
+    conflictAlgorithm: ConflictAlgorithm.replace,
+  );
+}
+
+Future<List<Activity>> activities() async {
+  final db = await databaseActivities;
+  final List<Map<String, Object?>> activityMaps = await db.query('activities');
+
+  return activityMaps.map((map) {
+    return Activity(
+      id: map['id'] as int,
+      date: map['date'] as String,
+      duration: map['duration'] as int,
+      category: map['category'] as String,
+    );
+  }).toList();
+}
+
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -68,6 +124,16 @@ void main() async {
     onCreate: (db, version) {
       return db.execute(
         'CREATE TABLE days (date TEXT PRIMARY KEY, cleanedTeethEvening INTEGER, cleanedTeethMorning INTEGER)',
+      );
+    },
+    version: 1,
+  );
+
+  databaseActivities = openDatabase(
+    join(await getDatabasesPath(), 'test_activities_db_v1.db'),
+    onCreate: (db, version) {
+      return db.execute(
+        'CREATE TABLE activities (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, duration INTEGER, category TEXT, FOREIGN KEY(date) REFERENCES days(date))',
       );
     },
     version: 1,
@@ -122,24 +188,44 @@ class TeethCheckboxContainer extends StatelessWidget {
 
 class _MyAppState extends State<MyApp> {
   int timeLeft = 0;
+  int timeSelected = 0;
+  bool activityCompleted = false;
   bool stopTimer = false;
   final List<String> timerCategories = [
+    'Not Specified',
     'Work',
     'School',
     'House work',
     'Excercise',
   ];
 
-  String? selectedValue;
+  String selectedValue = 'Not Specified';
 
   void _startCountDown() {
-    Timer.periodic(Duration(seconds: 1), (timer) {
+    timeSelected = timeLeft;
+
+    Timer.periodic(Duration(seconds: 1), (timer) async {
       if (timeLeft > 0 && !stopTimer) {
         setState(() {
           timeLeft--;
         });
-        stopTimer = true;
-      } else {
+        //stopTimer = true;
+      } 
+      else if (timeLeft == 0) {
+        timer.cancel();
+        activityCompleted = true;
+
+        await insertActivity(
+                Activity(
+                  date: DateFormat('yyyy-MM-dd').format(today),
+                  duration: timeSelected,
+                  category: selectedValue,
+                ),
+              );
+
+        print(await activities());
+      }
+      else {
         timer.cancel();
         stopTimer = false;
       }
@@ -249,7 +335,7 @@ class _MyAppState extends State<MyApp> {
               value: selectedValue,
               onChanged: (String? value) {
                 setState(() {
-                  selectedValue = value;
+                  selectedValue = value!;
                 });
               },
             ),
