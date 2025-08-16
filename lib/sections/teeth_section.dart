@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'models.dart';
-import 'database_service.dart';
-import 'teeth_checkbox.dart';
+import '../data/models.dart';
+import '../data/database_service.dart';
+import '../teeth_checkbox.dart';
 
 class TeethSection extends StatefulWidget {
   final DateTime today;

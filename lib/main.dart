@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'models.dart';
-import 'database_service.dart';
-import 'calendar_section.dart';
-import 'timer_section.dart';
-import 'teeth_section.dart';
+import 'data/models.dart';
+import 'data/database_service.dart';
+import 'sections/calendar_section.dart';
+import 'sections/timer_section.dart';
+import 'sections/stopwatch_section.dart';
+import 'sections/teeth_section.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,18 +46,50 @@ class _MyAppState extends State<MyApp> {
           });
         },
       ),
-      TimerSection(
-        onActivityComplete: (duration, category) async {
-          await DatabaseService().insertActivity(
-            Activity(
-              date: DateFormat('yyyy-MM-dd').format(today),
-              duration: duration,
-              category: category,
+      DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            const TabBar(
+              tabs: [
+                Tab(child: Text('Timer')),
+                Tab(child: Text('Stopwatch')),
+              ],
             ),
-          );
+            Expanded(
+              child: TabBarView(
+                children: [
+                  TimerSection(
+                    onActivityComplete: (duration, category) async {
+                      await DatabaseService().insertActivity(
+                        Activity(
+                          date: DateFormat('yyyy-MM-dd').format(today),
+                          duration: duration,
+                          category: category,
+                        ),
+                      );
 
-          print(await DatabaseService().activities());
-        },
+                      print(await DatabaseService().activities());
+                    },
+                  ),
+                  StopwatchSection(
+                    onActivityComplete: (duration, category) async {
+                      await DatabaseService().insertActivity(
+                        Activity(
+                          date: DateFormat('yyyy-MM-dd').format(today),
+                          duration: duration,
+                          category: category,
+                        ),
+                      );
+
+                      print(await DatabaseService().activities());
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       TeethSection(
         today: today,
@@ -75,7 +108,6 @@ class _MyAppState extends State<MyApp> {
         },
       ),
     ];
-
 
     return MaterialApp(
       home: Scaffold(
