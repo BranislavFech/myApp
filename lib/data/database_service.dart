@@ -10,6 +10,11 @@ class DatabaseService {
   static late final Future<Database> databaseActivities;
 
   static Future<void> init() async {
+    final pathActivities = join(await getDatabasesPath(), 'test_activities_db_v1.db');
+    
+    // vymaže celú databázu
+    await deleteDatabase(pathActivities);
+
     database = openDatabase(
       join(await getDatabasesPath(), 'test_db_v1.db'),
       onCreate: (db, version) {
