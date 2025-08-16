@@ -14,10 +14,12 @@ class TimerSection extends StatefulWidget {
 }
 
 class _TimerSectionState extends State<TimerSection> {
-  int timeLeft = 0;
+  int timeLeft = 300;
   int timeSelected = 0;
   bool activityCompleted = false;
   bool stopTimer = false;
+  MaterialButton? _button;
+  bool timerRunning = true;
   final List<String> timerCategories = [
     'Not Specified',
     'Work',
@@ -39,12 +41,18 @@ class _TimerSectionState extends State<TimerSection> {
 
     Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (timeLeft > 0 && !stopTimer) {
+        timerRunning = false;
         setState(() {
           timeLeft--;
         });
         //stopTimer = true;
       } else if (timeLeft == 0) {
         timer.cancel();
+        stopTimer = true;
+        setState(() {
+          timeLeft = 300;
+          timerRunning = true;
+        });
         await widget.onActivityComplete(timeSelected,selectedValue);
       } else {
         timer.cancel();
@@ -77,21 +85,21 @@ class _TimerSectionState extends State<TimerSection> {
         ),
         Text(
           formattedTime(timeLeft),
-          //(timeLeft).toString(),
           style: TextStyle(fontFamily: 'Bahnschrift', fontSize: 30),
         ),
-        MaterialButton(
-          onPressed: _startCountDown,
-          color: Colors.deepPurple,
-          child: Text(
-            'Start',
-            style: TextStyle(
-              fontFamily: 'Bahnschrift',
-              fontSize: 30,
-              color: Colors.white,
+        if(timerRunning)
+          MaterialButton(
+            onPressed: _startCountDown,
+            color: Colors.deepPurple,
+            child: Text(
+              'Start',
+              style: TextStyle(
+                fontFamily: 'Bahnschrift',
+                fontSize: 30,
+                color: Colors.white,
+              ),
             ),
           ),
-        ),
         DropdownButtonHideUnderline(
           child: DropdownButton(
             hint: Text('Select category', style: TextStyle(fontSize: 14)),
