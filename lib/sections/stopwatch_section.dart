@@ -22,6 +22,8 @@ class _StopwatchSectionState extends State<StopwatchSection> {
   bool stopTimer = false;
   Timer? _timer;
   List<ActivityCategory> categories = [];
+  AlertDialog? addCategory;
+  bool addCategoryBool = false;
 
   String? selectedValue;
 
@@ -35,7 +37,7 @@ class _StopwatchSectionState extends State<StopwatchSection> {
   Future<void> _loadCategories() async {
     final cats = await DatabaseService().activitiesCategories();
     setState(() {
-      categories = cats;
+      categories = [...cats, ActivityCategory(id: -1, category: '+ Add category')];
     });
   }
 
@@ -49,13 +51,13 @@ class _StopwatchSectionState extends State<StopwatchSection> {
     timeSelected = timeLeft;
     stopTimer = !stopTimer;
 
-    if (stopTimer){
+    if (stopTimer) {
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           timeLeft++;
         });
       });
-    } else{
+    } else {
       _timer?.cancel();
       timeSelected = timeLeft;
 
@@ -63,7 +65,10 @@ class _StopwatchSectionState extends State<StopwatchSection> {
         timeLeft = 0;
       });
 
-      await widget.onActivityComplete(timeSelected, selectedValue ?? 'Not specified');
+      await widget.onActivityComplete(
+        timeSelected,
+        selectedValue ?? 'Not specified',
+      );
     }
   }
 
@@ -82,7 +87,7 @@ class _StopwatchSectionState extends State<StopwatchSection> {
           onPressed: _startCountDown,
           color: Colors.deepPurple,
           child: Text(
-            stopTimer? 'Stop' : 'Start',
+            stopTimer ? 'Stop' : 'Start',
             style: TextStyle(
               fontFamily: 'Bahnschrift',
               fontSize: 30,
@@ -97,15 +102,57 @@ class _StopwatchSectionState extends State<StopwatchSection> {
                 .map(
                   (cat) => DropdownMenuItem<String>(
                     value: cat.category,
-                    child: Text(cat.category, style: const TextStyle(fontSize: 14)),
+                    child: Text(
+                      cat.category,
+                      style: const TextStyle(fontSize: 14),
+                    ),
                   ),
                 )
                 .toList(),
             value: selectedValue,
-            onChanged: (String? value) {
-              setState(() {
-                selectedValue = value!;
-              });
+            onChanged: (String? value) async {
+              if (value != '+ Add category') {
+                setState(() {
+                  selectedValue = value!;
+                });
+              } else {
+                String? newCategory = await showDialog<String>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    String input = "";
+
+                    return AlertDialog(
+                      title: Text("Add new category"),
+                      content: TextField(
+                        onChanged: (value) {
+                          input = value;
+                        },
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, 'Cancel'),
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, input),
+                          child: const Text("Add"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (newCategory != null && newCategory.isNotEmpty) {
+                  await DatabaseService().insertActivityCategory(ActivityCategory(category: newCategory));
+                  _loadCategories();
+                  setState(() {
+                    selectedValue = newCategory;
+                  });
+
+                  print(await DatabaseService().activitiesCategories());
+                }
+              }
+              ;
             },
           ),
         ),

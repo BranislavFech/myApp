@@ -131,7 +131,7 @@ class DatabaseService {
         'School',
         'Work',
         'House chores',
-        'Exercise'
+        'Exercise',
       ];
       
       for(final cat in defaults) {
