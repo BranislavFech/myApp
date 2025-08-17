@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:myapp/data/database_service.dart';
+import 'package:myapp/data/models.dart';
 import 'package:myapp/minutes.dart';
 import 'package:intl/intl.dart';
 
@@ -20,15 +22,23 @@ class _TimerSectionState extends State<TimerSection> {
   bool stopTimer = false;
   MaterialButton? _button;
   bool timerRunning = true;
-  final List<String> timerCategories = [
-    'Not Specified',
-    'Work',
-    'School',
-    'House work',
-    'Excercise',
-  ];
+  List<ActivityCategory> categories = [];
 
-  String selectedValue = 'Not Specified';
+  String? selectedValue;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    final cats = await DatabaseService().activitiesCategories();
+    setState(() {
+      categories = cats;
+    });
+  }
 
   String formattedTime(int time) {
     final int sec = time % 60;
@@ -53,7 +63,7 @@ class _TimerSectionState extends State<TimerSection> {
           timeLeft = 300;
           timerRunning = true;
         });
-        await widget.onActivityComplete(timeSelected,selectedValue);
+        await widget.onActivityComplete(timeSelected,selectedValue ?? 'Not Specified');
       } else {
         timer.cancel();
         stopTimer = false;
@@ -103,11 +113,11 @@ class _TimerSectionState extends State<TimerSection> {
         DropdownButtonHideUnderline(
           child: DropdownButton(
             hint: Text('Select category', style: TextStyle(fontSize: 14)),
-            items: timerCategories
+            items: categories
                 .map(
-                  (String item) => DropdownMenuItem<String>(
-                    value: item,
-                    child: Text(item, style: const TextStyle(fontSize: 14)),
+                  (cat) => DropdownMenuItem<String>(
+                    value: cat.category,
+                    child: Text(cat.category, style: const TextStyle(fontSize: 14)),
                   ),
                 )
                 .toList(),

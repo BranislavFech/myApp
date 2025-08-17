@@ -8,12 +8,15 @@ import 'models.dart';
 class DatabaseService {
   static late final Future<Database> database;
   static late final Future<Database> databaseActivities;
+  static late final Future<Database> databaseActivitiesCategory;
 
   static Future<void> init() async {
     final pathActivities = join(await getDatabasesPath(), 'test_activities_db_v1.db');
-    
+    final pathActivitiesCategories = join(await getDatabasesPath(), 'test_activities_categories_db_v1.db');
+
     // vymaže celú databázu
     await deleteDatabase(pathActivities);
+    await deleteDatabase(pathActivitiesCategories);
 
     database = openDatabase(
       join(await getDatabasesPath(), 'test_db_v1.db'),
@@ -30,6 +33,16 @@ class DatabaseService {
       onCreate: (db, version) {
         return db.execute(
           'CREATE TABLE activities (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT, duration INTEGER, category TEXT, FOREIGN KEY(date) REFERENCES days(date))',
+        );
+      },
+      version: 1,
+    );
+
+    databaseActivitiesCategory = openDatabase(
+      join(await getDatabasesPath(), 'test_activities_categories_db_v1.db'),
+      onCreate: (db, version) {
+        return db.execute(
+          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT)',
         );
       },
       version: 1,
@@ -82,5 +95,50 @@ class DatabaseService {
         category: map['category'] as String,
       );
     }).toList();
+  }
+
+  Future<void> insertActivityCategory(ActivityCategory cateogry) async {
+    final db = await databaseActivitiesCategory;
+
+    await db.insert(
+      'activities_categories',
+      cateogry.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<ActivityCategory>> activitiesCategories() async {
+    final db = await databaseActivitiesCategory;
+    final List<Map<String, Object?>> activityCategoryMaps = await db.query('activities_categories');
+
+    return activityCategoryMaps.map((map) {
+      return ActivityCategory(
+        id: map['id'] as int,
+        category: map['category'] as String,
+      );
+    }).toList();
+  }
+
+  Future<void> ensureDefaultCategories() async {
+    final db = await databaseActivitiesCategory;
+    final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM activities_categories'));
+    print("Count bol $count");
+    if (count == 0){
+
+      print("Vkladam kategorie");
+      final List<String> defaults = [
+        'Not specified',
+        'School',
+        'Work',
+        'House chores',
+        'Exercise'
+      ];
+      
+      for(final cat in defaults) {
+        await insertActivityCategory(ActivityCategory(category: cat));
+      }
+    }
+
+      
   }
 }

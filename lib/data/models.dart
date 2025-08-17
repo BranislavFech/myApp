@@ -48,6 +48,29 @@ class Activity {
 
   @override
   String toString() {
-    return 'MyDay{id: $id, date: $date, duration: $duration, category: $category}';
+    return 'Activity{id: $id, date: $date, duration: $duration, category: $category}';
+  }
+}
+
+
+class ActivityCategory {
+  final int? id;
+  final String category;
+
+  const ActivityCategory({
+    this.id,
+    required this.category,
+  });
+
+  Map<String, Object?> toMap() {
+    return {
+      'id': id,
+      'category': category,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'Activity{id: $id, category: $category}';
   }
 }

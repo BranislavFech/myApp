@@ -12,6 +12,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await DatabaseService.init();
+  await DatabaseService().ensureDefaultCategories();
+  print(await DatabaseService().activitiesCategories());
 
   runApp(MyApp());
 }
