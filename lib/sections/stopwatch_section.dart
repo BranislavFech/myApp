@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 
 import 'dart:async';
 
+import 'package:myapp/sections/widgets/category_dropdown.dart';
+
 class StopwatchSection extends StatefulWidget {
   final Function(int duration, String category) onActivityComplete;
 
@@ -26,20 +28,6 @@ class _StopwatchSectionState extends State<StopwatchSection> {
   bool addCategoryBool = false;
 
   String? selectedValue;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    _loadCategories();
-  }
-
-  Future<void> _loadCategories() async {
-    final cats = await DatabaseService().activitiesCategories();
-    setState(() {
-      categories = [...cats, ActivityCategory(id: -1, category: '+ Add category')];
-    });
-  }
 
   String formattedTime(int time) {
     final int sec = time % 60;
@@ -95,66 +83,13 @@ class _StopwatchSectionState extends State<StopwatchSection> {
             ),
           ),
         ),
-        DropdownButtonHideUnderline(
-          child: DropdownButton(
-            hint: Text('Select category', style: TextStyle(fontSize: 14)),
-            items: categories
-                .map(
-                  (cat) => DropdownMenuItem<String>(
-                    value: cat.category,
-                    child: Text(
-                      cat.category,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                )
-                .toList(),
-            value: selectedValue,
-            onChanged: (String? value) async {
-              if (value != '+ Add category') {
-                setState(() {
-                  selectedValue = value!;
-                });
-              } else {
-                String? newCategory = await showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    String input = "";
-
-                    return AlertDialog(
-                      title: Text("Add new category"),
-                      content: TextField(
-                        onChanged: (value) {
-                          input = value;
-                        },
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, 'Cancel'),
-                          child: const Text("Cancel"),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, input),
-                          child: const Text("Add"),
-                        ),
-                      ],
-                    );
-                  },
-                );
-
-                if (newCategory != null && newCategory.isNotEmpty) {
-                  await DatabaseService().insertActivityCategory(ActivityCategory(category: newCategory));
-                  _loadCategories();
-                  setState(() {
-                    selectedValue = newCategory;
-                  });
-
-                  print(await DatabaseService().activitiesCategories());
-                }
-              }
-              ;
-            },
-          ),
+        CategoryDropdown(
+          selectedValue: selectedValue,
+          onChanged: (value) {
+            setState(() {
+              selectedValue = value;
+            });
+          },
         ),
       ],
     );

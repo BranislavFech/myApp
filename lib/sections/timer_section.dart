@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 
 import 'dart:async';
 
+import 'package:myapp/sections/widgets/category_dropdown.dart';
+
 class TimerSection extends StatefulWidget {
   final Function(int duration, String category) onActivityComplete;
 
@@ -110,24 +112,13 @@ class _TimerSectionState extends State<TimerSection> {
               ),
             ),
           ),
-        DropdownButtonHideUnderline(
-          child: DropdownButton(
-            hint: Text('Select category', style: TextStyle(fontSize: 14)),
-            items: categories
-                .map(
-                  (cat) => DropdownMenuItem<String>(
-                    value: cat.category,
-                    child: Text(cat.category, style: const TextStyle(fontSize: 14)),
-                  ),
-                )
-                .toList(),
-            value: selectedValue,
-            onChanged: (String? value) {
-              setState(() {
-                selectedValue = value!;
-              });
-            },
-          ),
+        CategoryDropdown(
+          selectedValue: selectedValue,
+          onChanged: (value) {
+            setState(() {
+              selectedValue = value;
+            });
+          },
         ),
       ],
     );
