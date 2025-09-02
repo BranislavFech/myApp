@@ -76,6 +76,8 @@ class _TimerSectionState extends State<TimerSection> {
   @override
   Widget build(BuildContext context) {
     return Column(
+      spacing: 15,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           height: 150,

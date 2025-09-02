@@ -1,0 +1,39 @@
+🔹 Základný formát
+<typ>(<scope>): <krátky popis>
+
+
+typ → aký druh zmeny commit obsahuje
+
+scope (voliteľné) → ktorú časť appky sa zmena týka (napr. db, ui, timer)
+
+krátky popis → čo commit robí (v prítomnom čase, stručne)
+
+🔹 Najčastejšie typy
+
+feat → nová funkcionalita (napr. pridaný nový timer)
+
+fix → oprava bugov
+
+refactor → zmena kódu bez zmeny funkcionality (čistenie, úprava štruktúry)
+
+style → iba zmeny vzhľadu kódu (formatting, whitespace, komentáre)
+
+docs → zmeny v dokumentácii
+
+test → pridanie/úprava testov
+
+chore → údržba projektu (build skripty, dependencies, CI/CD)
+
+🔹 Príklady pre tvoju appku
+
+feat(timer): add reset to default 5:00 when finished
+
+fix(db): prevent duplicate activity entries
+
+refactor(ui): simplify stopwatch widget state
+
+feat(activities): allow category selection from dropdown
+
+chore: update flutter dependencies
+
+docs: add README setup instructions

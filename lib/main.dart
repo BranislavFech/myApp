@@ -7,6 +7,7 @@ import 'sections/calendar_section.dart';
 import 'sections/timer_section.dart';
 import 'sections/stopwatch_section.dart';
 import 'sections/teeth_section.dart';
+import 'package:myapp/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -112,24 +113,42 @@ class _MyAppState extends State<MyApp> {
     ];
 
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.amber,
-          title: const Text('Start of the app'),
-        ),
-        body: _widgetOptions[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month),
-              label: 'Calendar',
+      home: Builder(
+        builder: (context) {
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.amber,
+              title: const Text('Start of the app'),
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                    );
+                  },
+                  icon: Icon(Icons.settings),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.timer), label: 'Timer'),
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          ],
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-        ),
+            body: _widgetOptions[_selectedIndex],
+            bottomNavigationBar: BottomNavigationBar(
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_month),
+                  label: 'Calendar',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.timer),
+                  label: 'Timer',
+                ),
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              ],
+              currentIndex: _selectedIndex,
+              onTap: _onItemTapped,
+            ),
+          );
+        },
       ),
     );
   }
