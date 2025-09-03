@@ -7,7 +7,7 @@ import 'sections/calendar_section.dart';
 import 'sections/timer_section.dart';
 import 'sections/stopwatch_section.dart';
 import 'sections/teeth_section.dart';
-import 'package:myapp/settings_page.dart';
+import 'package:myapp/settings/settings_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

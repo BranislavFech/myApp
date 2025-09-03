@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
   table_calendar: ^3.2.0
   intl: ^0.20.2  # alebo najnovšiu dostupnú verziu
+  settings_ui: ^2.0.2
+
 
 
   # The following adds the Cupertino Icons font to your application.
