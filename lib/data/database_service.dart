@@ -39,10 +39,10 @@ class DatabaseService {
     );
 
     databaseActivitiesCategory = openDatabase(
-      join(await getDatabasesPath(), 'test_activities_categories_db_v1.db'),
+      join(await getDatabasesPath(), 'test_activities_categories_db_v2.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT)',
+          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, goal_hours INTEGER, goal_type TEXT)',
         );
       },
       version: 1,
@@ -107,6 +107,17 @@ class DatabaseService {
     );
   }
 
+  Future<void> updateActivityCategory(ActivityCategory cateogry) async {
+    final db = await databaseActivitiesCategory;
+
+    await db.update(
+      'activities_categories',
+      cateogry.toMap(),
+      where: 'category == ?',
+      whereArgs: [cateogry.category]
+    );
+  }
+
   Future<List<ActivityCategory>> activitiesCategories() async {
     final db = await databaseActivitiesCategory;
     final List<Map<String, Object?>> activityCategoryMaps = await db.query('activities_categories');
@@ -115,6 +126,8 @@ class DatabaseService {
       return ActivityCategory(
         id: map['id'] as int,
         category: map['category'] as String,
+        goal_hours: map['goal_hours'] as int,
+        goal_type: map['goal_type'] as String,
       );
     }).toList();
   }
@@ -135,7 +148,7 @@ class DatabaseService {
       ];
       
       for(final cat in defaults) {
-        await insertActivityCategory(ActivityCategory(category: cat));
+        await insertActivityCategory(ActivityCategory(category: cat, goal_hours: 0, goal_type: 'None'));
       }
     }
 

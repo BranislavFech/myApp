@@ -12,6 +12,9 @@ class GoalsSetPage extends StatefulWidget {
 
 class _GoalsSetPageState extends State<GoalsSetPage> {
   List<ActivityCategory> categories = [];
+  String goals_type = 'Weekly';
+  int? goals_hours;
+  int? confirmed_category_id;
 
   String? selectedValue;
 
@@ -37,7 +40,13 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
         length: 2,
         child: Column(
           children: [
-            const TabBar(
+            TabBar(
+              onTap: (index) {
+                setState(() {
+                  goals_type = index == 0 ? 'Weekly' : 'Monthly';
+                });
+                print(goals_type);
+              },
               tabs: [
                 Tab(child: Text('Weekly Goals')),
                 Tab(child: Text('Monthly Goals')),
@@ -50,7 +59,67 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                     itemCount: categories.length - 1,
                     itemBuilder: (context, index) {
                       final cat = categories[index + 1];
-                      return ListTile(title: Text(cat.category));
+                      return ListTile(
+                        title: Text(cat.category),
+                        trailing: Text(
+                          cat.goal_hours == 0
+                              ? 'Not set'
+                              : cat.goal_hours.toString(),
+                        ),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              int enteredHours = 0;
+
+                              return AlertDialog(
+                                title: Text(cat.category),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextField(
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        hintText: 'Enter hours',
+                                      ),
+                                      onChanged: (value) {
+                                        enteredHours = int.tryParse(value) ?? 0;
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text("Close"),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      setState(() {
+                                        cat.goal_hours = enteredHours;
+                                      });
+                                      cat.goal_type = goals_type;
+                                      print(
+                                        "potvrdena kategoria $cat s hodinami $enteredHours",
+                                      );
+                                      await DatabaseService()
+                                          .updateActivityCategory(cat);
+                                      print(
+                                        await DatabaseService()
+                                            .activitiesCategories(),
+                                      );
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text("Save"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
                     },
                   ),
                   ListView.builder(
@@ -69,3 +138,85 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
     );
   }
 }
+
+
+
+
+/*
+@override
+  Widget build(BuildContext Context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Set your goals")),
+      body: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            TabBar(
+              onTap: (index) {
+                setState(() {
+                  goals_type = index == 0 ? 'Weekly' : 'Monthly';
+                });
+                print(goals_type);
+              },
+              tabs: [
+                Tab(child: Text('Weekly Goals')),
+                Tab(child: Text('Monthly Goals')),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  ListView.builder(
+                    itemCount: categories.length - 1,
+                    itemBuilder: (context, index) {
+                      final cat = categories[index + 1];
+                      return ListTile(
+                        title: Text(cat.category),
+                        trailing: Row(
+                          children: [
+                            SizedBox(
+                              width: 80,
+                              child: TextField(
+                                keyboardType: TextInputType.number,
+                                onChanged: (val) {
+                                  setState(() {
+                                    goals_hours = int.tryParse(val) ?? 0;
+                                  });
+                                },
+                                decoration: InputDecoration(hintText: '0h'),
+                              ),
+                            ),
+                            Checkbox(
+                              value: confirmed_category_id == cat.id,
+                              onChanged: (checked) async {
+                                if (checked == true) {
+                                  print("potvrdene $cat");
+                                } else {
+                                  setState(() {
+                                    confirmed_category_id = null;
+                                  });
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  ListView.builder(
+                    itemCount: categories.length - 1,
+                    itemBuilder: (context, index) {
+                      final cat = categories[index + 1];
+                      return ListTile(title: Text(cat.category));
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+*/
