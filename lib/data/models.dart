@@ -57,13 +57,11 @@ class ActivityCategory {
   final int? id;
   final String category;
   int goal_hours;
-  String goal_type;
 
   ActivityCategory({
     this.id,
     required this.category,
     required this.goal_hours,
-    required this.goal_type,
   });
 
   Map<String, Object?> toMap() {
@@ -71,12 +69,11 @@ class ActivityCategory {
       'id': id,
       'category': category,
       'goal_hours': goal_hours,
-      'goal_type': goal_type,
     };
   }
 
   @override
   String toString() {
-    return 'Activity{id: $id, category: $category, goal_hours: $goal_hours, goal_type: $goal_type}';
+    return 'Activity{id: $id, category: $category, goal_hours: $goal_hours}';
   }
 }

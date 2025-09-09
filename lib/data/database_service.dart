@@ -4,19 +4,24 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'models.dart';
 
-
 class DatabaseService {
   static late final Future<Database> database;
   static late final Future<Database> databaseActivities;
   static late final Future<Database> databaseActivitiesCategory;
 
   static Future<void> init() async {
-    final pathActivities = join(await getDatabasesPath(), 'test_activities_db_v1.db');
-    final pathActivitiesCategories = join(await getDatabasesPath(), 'test_activities_categories_db_v1.db');
+    final pathActivities = join(
+      await getDatabasesPath(),
+      'test_activities_db_v1.db',
+    );
+    final pathActivitiesCategories = join(
+      await getDatabasesPath(),
+      'test_activities_categories_db_v3.db',
+    );
 
     // vymaže celú databázu
-    await deleteDatabase(pathActivities);
-    await deleteDatabase(pathActivitiesCategories);
+    //await deleteDatabase(pathActivities);
+    //await deleteDatabase(pathActivitiesCategories);
 
     database = openDatabase(
       join(await getDatabasesPath(), 'test_db_v1.db'),
@@ -39,16 +44,15 @@ class DatabaseService {
     );
 
     databaseActivitiesCategory = openDatabase(
-      join(await getDatabasesPath(), 'test_activities_categories_db_v2.db'),
+      join(await getDatabasesPath(), 'test_activities_categories_db_v3.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, goal_hours INTEGER, goal_type TEXT)',
+          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, goal_hours INTEGER)',
         );
       },
       version: 1,
     );
   }
-
 
   Future<void> insertMyDay(MyDay myDay) async {
     final db = await database;
@@ -58,6 +62,23 @@ class DatabaseService {
       myDay.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<Map<String, int>> totalHoursPerCategory() async {
+    final db = await databaseActivities;
+
+    final result = await db.rawQuery('''
+      SELECT category, SUM(duration) as total_hours
+      FROM activities
+      GROUP BY category
+    ''');
+
+    final Map<String, int> totals = {};
+    for (final row in result) {
+      totals[row['category'] as String] = row['total_hours'] as int;
+    }
+
+    return totals;
   }
 
   Future<List<MyDay>> days() async {
@@ -85,7 +106,9 @@ class DatabaseService {
 
   Future<List<Activity>> activities() async {
     final db = await databaseActivities;
-    final List<Map<String, Object?>> activityMaps = await db.query('activities');
+    final List<Map<String, Object?>> activityMaps = await db.query(
+      'activities',
+    );
 
     return activityMaps.map((map) {
       return Activity(
@@ -114,30 +137,32 @@ class DatabaseService {
       'activities_categories',
       cateogry.toMap(),
       where: 'category == ?',
-      whereArgs: [cateogry.category]
+      whereArgs: [cateogry.category],
     );
   }
 
   Future<List<ActivityCategory>> activitiesCategories() async {
     final db = await databaseActivitiesCategory;
-    final List<Map<String, Object?>> activityCategoryMaps = await db.query('activities_categories');
+    final List<Map<String, Object?>> activityCategoryMaps = await db.query(
+      'activities_categories',
+    );
 
     return activityCategoryMaps.map((map) {
       return ActivityCategory(
         id: map['id'] as int,
         category: map['category'] as String,
         goal_hours: map['goal_hours'] as int,
-        goal_type: map['goal_type'] as String,
       );
     }).toList();
   }
 
   Future<void> ensureDefaultCategories() async {
     final db = await databaseActivitiesCategory;
-    final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM activities_categories'));
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM activities_categories'),
+    );
     print("Count bol $count");
-    if (count == 0){
-
+    if (count == 0) {
       print("Vkladam kategorie");
       final List<String> defaults = [
         'Not specified',
@@ -146,12 +171,12 @@ class DatabaseService {
         'House chores',
         'Exercise',
       ];
-      
-      for(final cat in defaults) {
-        await insertActivityCategory(ActivityCategory(category: cat, goal_hours: 0, goal_type: 'None'));
+
+      for (final cat in defaults) {
+        await insertActivityCategory(
+          ActivityCategory(category: cat, goal_hours: 0),
+        );
       }
     }
-
-      
   }
 }
