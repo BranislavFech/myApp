@@ -22,13 +22,16 @@ class _CalendarSectionState extends State<CalendarSection> {
   List<ActivityCategory> categories = [];
   DateTime? _selectedDay;
   CalendarFormat _calendarFormat = CalendarFormat.month;
-  Map<String, int> totals = {};
+  Map<String, int> weekTotals = {};
+  Map<String, int> monthTotals = {};
+
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _loadCategories();
+    _loadTotals();
   }
 
   String formattedTime(int timeInSeconds) {
@@ -45,15 +48,20 @@ class _CalendarSectionState extends State<CalendarSection> {
   }
 
   Future<void> _loadTotals() async {
-    final hoursTotals = await DatabaseService().totalHoursPerCategory();
+    final totals = await DatabaseService().totalHoursPerCategory();
     setState(() {
-      totals = hoursTotals;
+      weekTotals=totals['week'] ?? {};
+      monthTotals=totals['month'] ?? {};
     });
     print(totals);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isWeek = _calendarFormat == CalendarFormat.week;
+    final currentTotals = isWeek ? weekTotals : monthTotals;
+
+
     return Column(
       children: [
         TableCalendar(
@@ -99,9 +107,8 @@ class _CalendarSectionState extends State<CalendarSection> {
                 itemCount: cats.isNotEmpty ? cats.length - 1 : 0,
                 itemBuilder: (context, index) {
                   final cat = cats[index + 1];
-                  final current = totals[cat.category] ?? 0;
+                  final current = currentTotals[cat.category] ?? 0;
 
-                  final isWeek = _calendarFormat == CalendarFormat.week;
                   final goal = isWeek ? cat.goal_hours : cat.goal_hours * 4;
                   final progress = goal > 0
                       ? ((current / 3600) / goal).clamp(0.0, 1.0)

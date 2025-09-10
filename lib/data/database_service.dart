@@ -64,21 +64,48 @@ class DatabaseService {
     );
   }
 
-  Future<Map<String, int>> totalHoursPerCategory() async {
+  Future<Map<String, Map<String, int>>> totalHoursPerCategory() async {
     final db = await databaseActivities;
+    final today = DateTime.now();
 
-    final result = await db.rawQuery('''
-      SELECT category, SUM(duration) as total_hours
-      FROM activities
-      GROUP BY category
-    ''');
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+    final weekStart = monday.toIso8601String().split('T').first;
+    final end = today.toIso8601String().split('T').first;
 
-    final Map<String, int> totals = {};
-    for (final row in result) {
-      totals[row['category'] as String] = row['total_hours'] as int;
+    final weekResult = await db.rawQuery(
+      '''
+    SELECT category, SUM(duration) as total_hours
+    FROM activities
+    WHERE date BETWEEN ? AND ?
+    GROUP BY category
+  ''',
+      [weekStart, end],
+    );
+
+    final Map<String, int> weekTotals = {};
+    for (final row in weekResult) {
+      weekTotals[row['category'] as String] = row['total_hours'] as int;
     }
 
-    return totals;
+    final firstDayOfMonth = DateTime(today.year, today.month, 1);
+    final monthStart = firstDayOfMonth.toIso8601String().split('T').first;
+
+    final monthResult = await db.rawQuery(
+      '''
+    SELECT category, SUM(duration) as total_hours
+    FROM activities
+    WHERE date BETWEEN ? AND ?
+    GROUP BY category
+  ''',
+      [monthStart, end],
+    );
+
+    final Map<String, int> monthTotals = {};
+    for (final row in monthResult) {
+      monthTotals[row['category'] as String] = row['total_hours'] as int;
+    }
+
+    return {"week": weekTotals, "month": monthTotals};
   }
 
   Future<List<MyDay>> days() async {
