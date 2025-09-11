@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:myapp/data/models.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:myapp/data/database_service.dart';
@@ -24,7 +25,7 @@ class _CalendarSectionState extends State<CalendarSection> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   Map<String, int> weekTotals = {};
   Map<String, int> monthTotals = {};
-
+  Map<DateTime, List<Map<String, dynamic>>> activities = {};
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _CalendarSectionState extends State<CalendarSection> {
     super.initState();
     _loadCategories();
     _loadTotals();
+    _loadActivities();
   }
 
   String formattedTime(int timeInSeconds) {
@@ -40,6 +42,17 @@ class _CalendarSectionState extends State<CalendarSection> {
     return "${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}";
   }
 
+  String formattedTimehhmmss(int timeInSeconds) {
+  final int hours = timeInSeconds ~/ 3600;             // celé hodiny
+  final int minutes = (timeInSeconds % 3600) ~/ 60;   // zvyšné minúty
+  final int seconds = timeInSeconds % 60;             // zvyšné sekundy
+
+  return "${hours.toString().padLeft(2, '0')}:"
+         "${minutes.toString().padLeft(2, '0')}:"
+         "${seconds.toString().padLeft(2, '0')}";
+  }
+
+
   Future<void> _loadCategories() async {
     final cats = await DatabaseService().activitiesCategories();
     setState(() {
@@ -47,11 +60,19 @@ class _CalendarSectionState extends State<CalendarSection> {
     });
   }
 
+  Future<void> _loadActivities() async {
+    final acts = await DatabaseService().activitiesData();
+    print(acts);
+    setState(() {
+      activities = acts;
+    });
+  }
+
   Future<void> _loadTotals() async {
     final totals = await DatabaseService().totalHoursPerCategory();
     setState(() {
-      weekTotals=totals['week'] ?? {};
-      monthTotals=totals['month'] ?? {};
+      weekTotals = totals['week'] ?? {};
+      monthTotals = totals['month'] ?? {};
     });
     print(totals);
   }
@@ -60,7 +81,6 @@ class _CalendarSectionState extends State<CalendarSection> {
   Widget build(BuildContext context) {
     final isWeek = _calendarFormat == CalendarFormat.week;
     final currentTotals = isWeek ? weekTotals : monthTotals;
-
 
     return Column(
       children: [
@@ -75,6 +95,43 @@ class _CalendarSectionState extends State<CalendarSection> {
               _selectedDay = selectedDay;
             });
             widget.onDaySelected(selectedDay, focusedDay);
+
+            String formatedDay = DateFormat(
+              'd.M.yyyy - EEEE',
+            ).format(selectedDay);
+
+            //print('Selected day is $selectedDay');
+
+            final normalizedDay = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+            final dayActivities = activities[normalizedDay] ?? [];
+
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(formatedDay),
+                content: SizedBox(
+                  width: double.maxFinite,
+                  child: dayActivities.isEmpty
+                      ? const Text('No activities for this day')
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: dayActivities.length,
+                          itemBuilder: (context, index) {
+                            final act = dayActivities[index];
+
+                            final category = act['category'] as String;
+                            final duration = act['duration'] as int;
+
+                            final time = formattedTimehhmmss(duration);
+                            return ListTile(
+                              title: Text(category),
+                              trailing: Text(time),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            );
           },
 
           calendarFormat: _calendarFormat,
@@ -93,6 +150,7 @@ class _CalendarSectionState extends State<CalendarSection> {
           onPressed: () async {
             await _loadCategories();
             await _loadTotals();
+            await _loadActivities();
           },
           child: const Text('Update goals'),
         ),

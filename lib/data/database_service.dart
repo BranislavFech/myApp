@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'models.dart';
@@ -62,6 +63,30 @@ class DatabaseService {
       myDay.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<Map<DateTime, List<Map<String, dynamic>>>> activitiesData() async {
+    final db = await databaseActivities;
+
+    final result = await db.rawQuery('''
+    SELECT category, duration, date
+    FROM activities
+  ''');
+
+    final Map<DateTime, List<Map<String, dynamic>>> activities = {};
+
+    for (final row in result) {
+      final date = DateTime.parse(row['date'] as String);
+
+      final activity = {
+        'category': row['category'] as String,
+        'duration': row['duration'] as int,
+      };
+
+      activities.putIfAbsent(date, () => []);
+      activities[date]!.add(activity);
+    }
+    return activities;
   }
 
   Future<Map<String, Map<String, int>>> totalHoursPerCategory() async {
