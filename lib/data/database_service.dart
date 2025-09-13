@@ -45,15 +45,16 @@ class DatabaseService {
     );
 
     databaseActivitiesCategory = openDatabase(
-      join(await getDatabasesPath(), 'test_activities_categories_db_v3.db'),
+      join(await getDatabasesPath(), 'test_activities_categories_db_v4.db'),
       onCreate: (db, version) {
         return db.execute(
-          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, goal_hours INTEGER)',
+          'CREATE TABLE activities_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, category TEXT, goal_hours INTEGER, color TEXT)',
         );
       },
       version: 1,
     );
   }
+  
 
   Future<void> insertMyDay(MyDay myDay) async {
     final db = await database;
@@ -87,6 +88,35 @@ class DatabaseService {
       activities[date]!.add(activity);
     }
     return activities;
+  }
+
+  Color parseColor(String color) {
+    String hex = color.replaceAll('#', '');
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+
+    return Color(int.parse(hex, radix: 16));
+  }
+
+  Future<Map<String, Color>> categoryColors() async {
+    final db = await databaseActivitiesCategory;
+
+    final result = await db.rawQuery('''
+    SELECT category, color
+    FROM activities_categories
+  ''');
+
+    final Map<String, Color> catColors = {};
+
+    for (final row in result) {
+      final category = row['category'] as String;
+      final colorString = row['color'] as String;
+      final color = parseColor(colorString);
+
+      catColors[category] = color;
+    }
+    return catColors;
   }
 
   Future<Map<String, Map<String, int>>> totalHoursPerCategory() async {
@@ -204,6 +234,7 @@ class DatabaseService {
         id: map['id'] as int,
         category: map['category'] as String,
         goal_hours: map['goal_hours'] as int,
+        color: map['color'] as String,
       );
     }).toList();
   }
@@ -216,17 +247,17 @@ class DatabaseService {
     print("Count bol $count");
     if (count == 0) {
       print("Vkladam kategorie");
-      final List<String> defaults = [
-        'Not specified',
-        'School',
-        'Work',
-        'House chores',
-        'Exercise',
+      final List<Map<String, dynamic>> defaults = [
+        {'category': 'Not specified', 'color': '#9E9E9E'},
+        {'category': 'School', 'color': '#2196F3'},
+        {'category': 'Work', 'color': '#4CAF50'},
+        {'category': 'House chores', 'color': '#FF9800'},
+        {'category': 'Exercise', 'color': '#F44336'},
       ];
 
       for (final cat in defaults) {
         await insertActivityCategory(
-          ActivityCategory(category: cat, goal_hours: 0),
+          ActivityCategory(category: cat['category'], goal_hours: 0, color: cat['color']),
         );
       }
     }

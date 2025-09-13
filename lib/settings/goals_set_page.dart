@@ -4,7 +4,6 @@ import '../data/database_service.dart';
 import '../data/models.dart';
 
 class GoalsSetPage extends StatefulWidget {
-
   const GoalsSetPage({super.key});
 
   @override
@@ -31,6 +30,15 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
     setState(() {
       categories = cats;
     });
+  }
+
+  Color parseColor(String color) {
+    String hex = color.replaceAll('#', '');
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+
+    return Color(int.parse(hex, radix: 16));
   }
 
   @override
@@ -61,6 +69,9 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                     itemBuilder: (context, index) {
                       final cat = categories[index + 1];
                       return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: parseColor(cat.color),
+                        ),
                         title: Text(cat.category),
                         trailing: Text(
                           cat.goal_hours == 0
@@ -104,7 +115,8 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                                       print(
                                         "potvrdena kategoria $cat s hodinami $enteredHours",
                                       );
-                                      await DatabaseService().updateActivityCategory(cat);
+                                      await DatabaseService()
+                                          .updateActivityCategory(cat);
                                       print(
                                         await DatabaseService()
                                             .activitiesCategories(),
@@ -170,7 +182,8 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                                       print(
                                         "potvrdena kategoria $cat s hodinami $enteredHours",
                                       );
-                                      await DatabaseService().updateActivityCategory(cat);
+                                      await DatabaseService()
+                                          .updateActivityCategory(cat);
 
                                       print(
                                         await DatabaseService()

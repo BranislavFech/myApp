@@ -31,7 +31,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
     setState(() {
       categories = [
         ...cats,
-        ActivityCategory(id: -1, category: '+ Add category', goal_hours: 0),
+        ActivityCategory(id: -1, category: '+ Add category', goal_hours: 0, color: ''),
       ];
     });
   }
@@ -65,7 +65,7 @@ class _CategoryDropdownState extends State<CategoryDropdown> {
 
     if (newCategory != null && newCategory.isNotEmpty) {
       await DatabaseService().insertActivityCategory(
-        ActivityCategory(category: newCategory, goal_hours: 0),
+        ActivityCategory(category: newCategory, goal_hours: 0, color: '#2196F3'),
       );
       await _loadCategories();
       widget.onChanged(newCategory);

@@ -26,6 +26,7 @@ class _CalendarSectionState extends State<CalendarSection> {
   Map<String, int> weekTotals = {};
   Map<String, int> monthTotals = {};
   Map<DateTime, List<Map<String, dynamic>>> activities = {};
+  Map<String, Color> categoryColors = {};
 
   @override
   void initState() {
@@ -34,6 +35,7 @@ class _CalendarSectionState extends State<CalendarSection> {
     _loadCategories();
     _loadTotals();
     _loadActivities();
+    _loadCategoryColors();
   }
 
   String formattedTime(int timeInSeconds) {
@@ -77,6 +79,16 @@ class _CalendarSectionState extends State<CalendarSection> {
     print(totals);
   }
 
+  Future<void> _loadCategoryColors() async {
+    final catColors = await DatabaseService().categoryColors();
+    setState(() {
+      categoryColors = catColors;
+    });
+    print("_______________________FARBY KATEGORII_______________________");
+    print(catColors);
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final isWeek = _calendarFormat == CalendarFormat.week;
@@ -88,6 +100,7 @@ class _CalendarSectionState extends State<CalendarSection> {
           focusedDay: widget.today,
           firstDay: DateTime.utc(2020, 1, 1),
           lastDay: DateTime.utc(2030, 12, 31),
+          startingDayOfWeek: StartingDayOfWeek.monday,
 
           selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
           onDaySelected: (selectedDay, focusedDay) {
@@ -145,12 +158,42 @@ class _CalendarSectionState extends State<CalendarSection> {
             CalendarFormat.month: 'Month',
             CalendarFormat.week: 'Week',
           },
+
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context,day,events) {
+            final normalizedDay = DateTime(day.year, day.month, day.day);
+            final dayActivities = activities[normalizedDay] ?? [];
+
+            if(dayActivities.isEmpty) return null;
+
+            final uniqueCategories = dayActivities.map((act) => act['category'] as String).toSet().toList();
+
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: uniqueCategories.map((category) {
+                final color = categoryColors[category] ?? Colors.black;
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color
+                  ),
+                );
+              }).toList(),
+            );
+          }
+        ),
+
         ),
         ElevatedButton(
           onPressed: () async {
             await _loadCategories();
             await _loadTotals();
             await _loadActivities();
+            await _loadCategoryColors();
           },
           child: const Text('Update goals'),
         ),
