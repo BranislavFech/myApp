@@ -54,7 +54,6 @@ class DatabaseService {
       version: 1,
     );
   }
-  
 
   Future<void> insertMyDay(MyDay myDay) async {
     final db = await database;
@@ -218,8 +217,27 @@ class DatabaseService {
     await db.update(
       'activities_categories',
       cateogry.toMap(),
-      where: 'category == ?',
+      where: 'category = ?',
       whereArgs: [cateogry.category],
+    );
+  }
+
+  Future<void> removeActivityCategory(String cateogry) async {
+    final dbCategories = await databaseActivitiesCategory;
+
+    await dbCategories.delete(
+      'activities_categories',
+      where: 'category = ?',
+      whereArgs: [cateogry],
+    );
+
+    final dbActivities = await databaseActivities;
+
+    await dbActivities.update(
+      'activities',
+      {'category': 'Not specified'},
+      where: 'category = ?',
+      whereArgs: [cateogry],
     );
   }
 
@@ -257,7 +275,11 @@ class DatabaseService {
 
       for (final cat in defaults) {
         await insertActivityCategory(
-          ActivityCategory(category: cat['category'], goal_hours: 0, color: cat['color']),
+          ActivityCategory(
+            category: cat['category'],
+            goal_hours: 0,
+            color: cat['color'],
+          ),
         );
       }
     }

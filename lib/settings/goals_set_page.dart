@@ -130,6 +130,36 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                             },
                           );
                         },
+                        onLongPress: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text("Delete ${cat.category}?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text("Cancel"),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () async {
+                                      await DatabaseService().removeActivityCategory(cat.category);
+
+                                      setState(() {
+                                        categories.remove(cat);
+                                      });
+
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text("Confirm"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                       );
                     },
                   ),
