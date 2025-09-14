@@ -3,6 +3,7 @@ import 'package:myapp/data/database_service.dart';
 import 'package:myapp/data/models.dart';
 import 'package:myapp/minutes.dart';
 import 'package:intl/intl.dart';
+import 'package:myapp/sections/stopwatch_section.dart';
 
 import 'dart:async';
 
@@ -10,14 +11,15 @@ import 'package:myapp/sections/widgets/category_dropdown.dart';
 
 class TimerSection extends StatefulWidget {
   final Function(int duration, String category) onActivityComplete;
+  final StopwatchSectionState? stopwatchState;
 
-  const TimerSection({super.key, required this.onActivityComplete});
+  const TimerSection({super.key, required this.onActivityComplete, this.stopwatchState});
 
   @override
-  State<TimerSection> createState() => _TimerSectionState();
+  State<TimerSection> createState() => TimerSectionState();
 }
 
-class _TimerSectionState extends State<TimerSection> {
+class TimerSectionState extends State<TimerSection> with AutomaticKeepAliveClientMixin{
   int timeLeft = 300;
   int timeSelected = 0;
   bool activityCompleted = false;
@@ -25,8 +27,23 @@ class _TimerSectionState extends State<TimerSection> {
   MaterialButton? _button;
   bool timerRunning = true;
   List<ActivityCategory> categories = [];
+  Timer? _timer;
+  GlobalKey<StopwatchSectionState> stopwatchKey = GlobalKey();
+
 
   String? selectedValue;
+
+  bool get isRunning => !stopTimer && !timerRunning;
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override 
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -49,9 +66,16 @@ class _TimerSectionState extends State<TimerSection> {
   }
 
   void _startCountDown() {
+    if(widget.stopwatchState?.isRunning ?? false) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('Stopwatch is running! Stop it first.'))
+      );
+      return;
+    }
+
     timeSelected = timeLeft;
 
-    Timer.periodic(const Duration(seconds: 1), (timer) async {
+    _timer=Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (timeLeft > 0 && !stopTimer) {
         timerRunning = false;
         setState(() {
@@ -75,6 +99,7 @@ class _TimerSectionState extends State<TimerSection> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Column(
       spacing: 15,
       mainAxisAlignment: MainAxisAlignment.center,

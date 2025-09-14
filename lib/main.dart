@@ -32,7 +32,90 @@ class _MyAppState extends State<MyApp> {
   bool cleanedTeethEvening = false;
   int _selectedIndex = 0;
 
-  void _onItemTapped(int index) {
+  GlobalKey<StopwatchSectionState> stopwatchKey = GlobalKey();
+  GlobalKey<TimerSectionState> timerKey = GlobalKey();
+
+  //late TabController _tabController;
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _tabController = TabController(length: 2, vsync: NavigatorState());
+  //   _tabController.addListener(() async {
+  //     if (_tabController.indexIsChanging) {
+  //       if ((timerKey.currentState?.isRunning ?? false) ||
+  //           (stopwatchKey.currentState?.isRunning ?? false)) {
+  //         bool leave = await _confirmLeave(context);
+  //         if (!leave) {
+  //           // Vráť späť na pôvodný tab
+  //           _tabController.index = _tabController.previousIndex;
+  //         }
+  //       }
+  //     }
+  //   });
+  // }
+
+  // @override
+  // void dispose() {
+  //   _tabController.dispose();
+  //   super.dispose();
+  // }
+
+  Future<bool> _confirmLeave(BuildContext context, String section) async {
+    String title;
+    String content;
+
+    if (section == 'stopwatch') {
+      title = "Stopwatch is running!";
+      content = "Do you want to leave and save your time?";
+    } else {
+      title = "Timer is running!";
+      content = "Do you want to leave and abandon your progress?";
+    }
+
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(content),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text("Leave"),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  void _onItemTapped(int index, BuildContext context) async {
+    if (stopwatchKey.currentState?.isRunning ?? false) {
+      bool leave = await _confirmLeave(context, 'stopwatch');
+      if (!leave) return;
+
+      if (stopwatchKey.currentState?.isRunning ?? false) {
+        final duration = stopwatchKey.currentState!.elapsedSeconds;
+        print("\n\n\n\n$duration\n\n\n\n");
+        final category =
+            stopwatchKey.currentState!.selectedCategory ?? 'Not specified';
+
+        await DatabaseService().insertActivity(
+          Activity(
+            date: DateFormat('yyyy-MM-dd').format(today),
+            duration: duration,
+            category: category,
+          ),
+        );
+      }
+    } else if (timerKey.currentState?.isRunning ?? false) {
+      bool leave = await _confirmLeave(context, 'timer');
+      if (!leave) return;
+    }
     setState(() {
       _selectedIndex = index;
     });
@@ -53,7 +136,18 @@ class _MyAppState extends State<MyApp> {
         length: 2,
         child: Column(
           children: [
-            const TabBar(
+            TabBar(
+              onTap: (tabIndex) async {
+                if (stopwatchKey.currentState?.isRunning ?? false) {
+                  bool leave = await _confirmLeave(context, 'stopwatch');
+                  if (!leave) return;
+                  // uloženie stopwatch
+                } else if (timerKey.currentState?.isRunning ?? false) {
+                  bool leave = await _confirmLeave(context, 'timer');
+                  if (!leave) return;
+                  // uloženie timer
+                }
+              },
               tabs: [
                 Tab(child: Text('Timer')),
                 Tab(child: Text('Stopwatch')),
@@ -63,6 +157,8 @@ class _MyAppState extends State<MyApp> {
               child: TabBarView(
                 children: [
                   TimerSection(
+                    key: timerKey,
+                    stopwatchState: stopwatchKey.currentState,
                     onActivityComplete: (duration, category) async {
                       await DatabaseService().insertActivity(
                         Activity(
@@ -76,6 +172,8 @@ class _MyAppState extends State<MyApp> {
                     },
                   ),
                   StopwatchSection(
+                    key: stopwatchKey,
+                    timerState: timerKey.currentState,
                     onActivityComplete: (duration, category) async {
                       await DatabaseService().insertActivity(
                         Activity(
@@ -145,7 +243,7 @@ class _MyAppState extends State<MyApp> {
                 BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
               ],
               currentIndex: _selectedIndex,
-              onTap: _onItemTapped,
+              onTap: (index) => _onItemTapped(index, context),
             ),
           );
         },
