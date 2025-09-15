@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:settings_ui/settings_ui.dart';
 import '../data/database_service.dart';
 import '../data/models.dart';
@@ -41,6 +42,31 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
     return Color(int.parse(hex, radix: 16));
   }
 
+  String colorToHex(Color color) {
+    // color.value je ARGB int
+    int argb = color.value;
+    int r = (argb >> 16) & 0xFF;
+    int g = (argb >> 8) & 0xFF;
+    int b = argb & 0xFF;
+
+    return '#${r.toRadixString(16).padLeft(2, '0')}${g.toRadixString(16).padLeft(2, '0')}${b.toRadixString(16).padLeft(2, '0')}'
+        .toUpperCase();
+  }
+
+  Future<void> _addCategory(String newCategory, Color pickedColor) async {
+    if (newCategory.isNotEmpty) {
+      // prevedieme na hex kód #RRGGBB
+      String hexColor = colorToHex(pickedColor);
+
+      await DatabaseService().insertActivityCategory(
+        ActivityCategory(category: newCategory, goal_hours: 0, color: hexColor),
+      );
+
+      await _loadCategories();
+      print(await DatabaseService().activitiesCategories());
+    }
+  }
+
   @override
   Widget build(BuildContext Context) {
     return Scaffold(
@@ -65,7 +91,9 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
               child: TabBarView(
                 children: [
                   ListView.builder(
-                    itemCount: categories.length - 1,
+                    itemCount: categories.length > 1
+                        ? categories.length - 1
+                        : 0,
                     itemBuilder: (context, index) {
                       final cat = categories[index + 1];
                       return ListTile(
@@ -83,22 +111,34 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                             context: context,
                             builder: (context) {
                               int enteredHours = 0;
+                              Color selectedColor = parseColor(cat.color);
 
                               return AlertDialog(
                                 title: Text(cat.category),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    TextField(
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        hintText: 'Enter hours',
+                                content: SingleChildScrollView(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      TextField(
+                                        keyboardType: TextInputType.number,
+                                        decoration: InputDecoration(
+                                          hintText: 'Enter hours',
+                                        ),
+                                        onChanged: (value) {
+                                          enteredHours =
+                                              int.tryParse(value) ?? 0;
+                                        },
                                       ),
-                                      onChanged: (value) {
-                                        enteredHours = int.tryParse(value) ?? 0;
-                                      },
-                                    ),
-                                  ],
+                                      const SizedBox(height: 20),
+                                      Text("Pick a color"),
+                                      BlockPicker(
+                                        pickerColor: selectedColor,
+                                        onColorChanged: (color) {
+                                          selectedColor = color;
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(
@@ -121,6 +161,9 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                                         await DatabaseService()
                                             .activitiesCategories(),
                                       );
+
+                                      if (!mounted) return;
+                                      
                                       Navigator.pop(context);
                                     },
                                     child: const Text("Save"),
@@ -145,11 +188,14 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                                   ),
                                   ElevatedButton(
                                     onPressed: () async {
-                                      await DatabaseService().removeActivityCategory(cat.category);
+                                      await DatabaseService()
+                                          .removeActivityCategory(cat.category);
 
                                       setState(() {
                                         categories.remove(cat);
                                       });
+
+                                      if (!mounted) return;
 
                                       Navigator.pop(context);
                                     },
@@ -164,7 +210,9 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                     },
                   ),
                   ListView.builder(
-                    itemCount: categories.length - 1,
+                    itemCount: categories.length > 1
+                        ? categories.length - 1
+                        : 0,
                     itemBuilder: (context, index) {
                       final cat = categories[index + 1];
                       return ListTile(
@@ -179,6 +227,7 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                             context: context,
                             builder: (context) {
                               int enteredHours = 0;
+                              Color selectedColor = parseColor(cat.color);
 
                               return AlertDialog(
                                 title: Text(cat.category),
@@ -192,6 +241,14 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                                       ),
                                       onChanged: (value) {
                                         enteredHours = int.tryParse(value) ?? 0;
+                                      },
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text("Pick a color"),
+                                    BlockPicker(
+                                      pickerColor: selectedColor,
+                                      onColorChanged: (color) {
+                                        selectedColor = color;
                                       },
                                     ),
                                   ],
@@ -219,6 +276,9 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
                                         await DatabaseService()
                                             .activitiesCategories(),
                                       );
+
+                                      if (!mounted) return;
+
                                       Navigator.pop(context);
                                     },
                                     child: const Text("Save"),
@@ -236,6 +296,57 @@ class _GoalsSetPageState extends State<GoalsSetPage> {
             ),
           ],
         ),
+      ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              String newCategory = "";
+              Color pickedColor = Colors.black;
+
+              return AlertDialog(
+                title: const Text("Add category"),
+                content: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(hintText: "New category"),
+                      onChanged: (value) {
+                        newCategory = value;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    Text("Pick a color"),
+                    BlockPicker(
+                      pickerColor: pickedColor,
+                      onColorChanged: (color) {
+                        pickedColor = color;
+                      },
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text("Cancel"),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        await _addCategory(newCategory, pickedColor);
+
+                        if (!mounted) return;
+
+                        Navigator.pop(context);
+                      },
+                      child: Text("Save category"),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+        label: Text("Add category"),
       ),
     );
   }
